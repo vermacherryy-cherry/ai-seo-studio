@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI SEO Image Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090b;--panel:#0f1012;--card:#141417;
+  --border:#1c1c21;--border2:#27272d;
+  --accent:#6366f1;--accent2:#8b5cf6;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--orange:#f97316;--cyan:#06b6d4;
+  --text:#f4f4f8;--muted:#52525e;--muted2:#303038;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;gap:10px;padding:0 18px;height:50px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0}
+.hdr-logo{width:26px;height:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.hdr-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:13px;letter-spacing:.02em}
+.hdr-sub{font-size:10px;color:var(--muted);background:var(--card);border:1px solid var(--border2);padding:2px 8px;border-radius:20px}
+.hdr-space{flex:1}
+.hdr-timing{font-size:11px;color:var(--muted)}
+#timing-val{color:var(--green);font-weight:700}
+.btn-key{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border2);border-radius:7px;padding:6px 11px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.btn-key:hover{border-color:var(--accent);color:var(--text)}
+.btn-key.ok{border-color:rgba(34,197,94,.4);color:var(--green)}
+
+/* LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* LEFT */
+.left{width:300px;min-width:300px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.lscroll{flex:1;overflow-y:auto;padding:14px}
+.lscroll::-webkit-scrollbar{width:3px}
+.lscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.lfooter{padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0}
+
+.sec{margin-bottom:14px}
+.sec-hd{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted2);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.sec-hd::after{content:'';flex:1;height:1px;background:var(--border)}
+
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:9px}
+label:first-of-type{margin-top:0}
+input[type=text],textarea,select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;outline:none;transition:border-color .15s;resize:none}
+input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+select option{background:var(--card)}
+
+/* SENTIMENT */
+.sent-row{display:flex;gap:5px}
+.sent-btn{flex:1;padding:7px 4px;border-radius:7px;border:1px solid var(--border2);background:var(--card);color:var(--muted);font-size:10px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;text-align:center;transition:all .15s;letter-spacing:.04em}
+.sent-btn:hover{color:var(--text)}
+.sent-btn.s-auto{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4);color:var(--accent)}
+.sent-btn.s-pos{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4);color:var(--green)}
+.sent-btn.s-neg{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:var(--red)}
+.sent-btn.s-neu{background:rgba(234,179,8,.1);border-color:rgba(234,179,8,.4);color:var(--yellow)}
+
+/* INFO BOX */
+.info-box{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:9px 11px;font-size:11px;color:var(--muted);min-height:34px;line-height:1.55}
+.info-box.filled{color:var(--text)}
+.info-row-logo{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+#logo-img{width:26px;height:26px;border-radius:5px;object-fit:contain;background:white;padding:2px;display:none}
+#domain-txt{font-size:11px;color:var(--accent)}
+
+/* GENERATE BTN */
+.btn-gen{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;color:white;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:900;letter-spacing:.06em;cursor:pointer;transition:all .2s}
+.btn-gen:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+.btn-gen:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* PROGRESS */
+.prog-bar{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-top:9px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:1px;transition:width .4s ease;width:0}
+.prog-txt{font-size:10px;color:var(--muted);margin-top:5px;text-align:center;min-height:14px}
+
+/* CENTER */
+.center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+
+.preview-wrap{position:relative;border-radius:4px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.7);flex-shrink:0}
+#preview-img{display:block;max-width:100%;max-height:100%}
+.text-overlay{position:absolute;bottom:0;left:0;right:0;height:26%;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.9) 35%,white);display:none;align-items:flex-end;padding:0 16px 12px}
+.words-line{display:flex;flex-wrap:wrap;gap:2px 4px;align-items:baseline;line-height:1.15}
+.w-span{font-family:'Montserrat',sans-serif;font-weight:900;color:#111;cursor:pointer;padding:1px 3px;border-radius:3px;transition:opacity .1s;user-select:none}
+.w-span:hover{opacity:.75}
+.hl-yellow{background:#fde047;color:#1a1a1a}
+.hl-green{background:#22c55e;color:#fff}
+.hl-red{background:#ef4444;color:#fff}
+.hl-orange{background:#f97316;color:#fff}
+.hl-cyan{background:#06b6d4;color:#fff}
+.hl-purple{background:#a855f7;color:#fff}
+
+/* EMPTY STATE */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted2);width:600px;height:315px;border:1px dashed var(--border2);border-radius:8px}
+.empty-ico{font-size:42px;opacity:.3}
+.empty-txt{font-size:13px;color:var(--muted)}
+.empty-sub{font-size:11px;opacity:.6}
+
+/* BOTTOM BAR */
+.bot{border-top:1px solid var(--border);background:var(--panel);padding:9px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bot-label{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.pills-wrap{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+.pill{font-size:11px;padding:4px 9px;border-radius:20px;cursor:pointer;border:1px solid var(--border2);background:var(--card);color:var(--muted);transition:all .1s;font-family:'Inter',sans-serif;white-space:nowrap}
+.pill:hover{border-color:var(--accent);color:var(--text)}
+.pill.sel{outline:2px solid var(--accent);outline-offset:1px}
+
+/* COLOR PICKER */
+.clr-row{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.clr-dot{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .12s;flex-shrink:0}
+.clr-dot:hover{transform:scale(1.2)}
+.clr-dot.active{border-color:white;box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+.clr-none{background:var(--card);border:1px solid var(--border2) !important}
+
+.btn-dl{padding:8px 16px;background:var(--card);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.btn-dl:hover{border-color:var(--accent);color:var(--accent)}
+.btn-dl:disabled{opacity:.4;cursor:not-allowed}
+
+/* RIGHT */
+.right{width:256px;min-width:256px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.rscroll{flex:1;overflow-y:auto;padding:14px}
+.rscroll::-webkit-scrollbar{width:3px}
+.rscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.btn-sm{padding:5px 10px;font-size:10px;font-weight:600;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:999}
+.modal-bg.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--border2);border-radius:14px;padding:24px;width:370px;box-shadow:0 24px 64px rgba(0,0,0,.6)}
+.modal h3{font-family:'Montserrat',sans-serif;font-weight:900;font-size:16px;margin-bottom:6px}
+.modal p{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.btn-prim{flex:1;padding:10px;background:var(--accent);border:none;border-radius:8px;color:white;font-weight:700;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-sec{padding:10px 14px;background:var(--card);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">✦</div>
+  <span class="hdr-title">AI SEO Image Studio</span>
+  <span class="hdr-sub">1200 × 628</span>
+  <div class="hdr-space"></div>
+  <span class="hdr-timing">Last gen: <span id="timing-val">—</span></span>
+  <button class="btn-key" id="btn-key" onclick="showKeyModal()">🔑 Set API Key</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT PANEL -->
+  <div class="left">
+    <div class="lscroll">
+
+      <div class="sec">
+        <div class="sec-hd">Content</div>
+        <label>Company Name</label>
+        <input type="text" id="inp-company" placeholder="e.g. HDFC Bank, Reliance, Zomato" oninput="st.company=this.value">
+        <label>Headline Text</label>
+        <textarea id="inp-headline" rows="3" placeholder="Type your news headline here..." oninput="st.headline=this.value"></textarea>
+      </div>
+
+      <div class="sec">
+        <div class="sec-hd">Market Sentiment</div>
+        <div class="sent-row">
+          <button class="sent-btn s-auto" id="sb-auto" onclick="setSentiment('auto')">AUTO</button>
+          <button class="sent-btn" id="sb-pos"  onclick="setSentiment('positive')">▲ Bullish</button>
+          <button class="sent-btn" id="sb-neg"  onclick="setSentiment('negative')">▼ Bearish</button>
+          <button class="sent-btn" id="sb-neu"  onclick="setSentiment('neutral')">— Flat</button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-hd">Auto-Detected</div>
+        <div class="info-row-logo">
+          <img id="logo-img" src="" alt="logo">
+          <span id="domain-txt" style="color:var(--muted2);font-size:11px">—</span>
+        </div>
+        <div class="info-box" id="info-desc">Company info will appear after generation.</div>
+      </div>
+
+    </div>
+
+    <div class="lfooter">
+      <button class="btn-gen" id="btn-gen" onclick="generate()">⚡ Generate Image</button>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="prog-txt" id="prog-txt"></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="canvas-area" id="canvas-area">
+      <div class="empty" id="empty-state">
+        <div class="empty-ico">🎨</div>
+        <div class="empty-txt">Your image will appear here</div>
+        <div class="empty-sub">Enter company + headline and hit Generate</div>
+      </div>
+      <div class="preview-wrap" id="preview-wrap" style="display:none">
+        <img id="preview-img" src="" alt="preview">
+        <div class="text-overlay" id="text-overlay">
+          <div class="words-line" id="words-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bot" id="bot-bar">
+      <span class="bot-label">Words</span>
+      <div class="pills-wrap" id="pills-wrap"></div>
+      <div class="clr-row" id="clr-row">
+        <span style="font-size:10px;color:var(--muted);margin-right:2px">Color</span>
+        <div class="clr-dot clr-none active" data-c="none" onclick="applyColor('none')" title="None"></div>
+        <div class="clr-dot active" data-c="yellow" style="background:#fde047" onclick="applyColor('yellow')" title="Yellow"></div>
+        <div class="clr-dot" data-c="green"  style="background:#22c55e" onclick="applyColor('green')"  title="Green"></div>
+        <div class="clr-dot" data-c="red"    style="background:#ef4444" onclick="applyColor('red')"    title="Red"></div>
+        <div class="clr-dot" data-c="orange" style="background:#f97316" onclick="applyColor('orange')" title="Orange"></div>
+        <div class="clr-dot" data-c="cyan"   style="background:#06b6d4" onclick="applyColor('cyan')"   title="Cyan"></div>
+        <div class="clr-dot" data-c="purple" style="background:#a855f7" onclick="applyColor('purple')" title="Purple"></div>
+      </div>
+      <button class="btn-dl" id="btn-dl" onclick="downloadImage()" disabled>↓ Download PNG</button>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+    <div class="rscroll">
+      <div class="sec">
+        <div class="sec-hd">Overrides</div>
+
+        <label>Company Description</label>
+        <textarea id="ov-desc" rows="4" placeholder="Auto-filled after generation. Edit to change image scene."></textarea>
+        <div style="margin-top:6px">
+          <button class="btn-sm" onclick="regenWithOverrides()">↺ Regen Image</button>
+        </div>
+
+        <label style="margin-top:14px">Market Sentiment (Visual)</label>
+        <select id="ov-sentiment" onchange="st.ovSentiment=this.value">
+          <option value="">Use auto-detected</option>
+          <option value="positive">Bullish — Green / Gold / Rising</option>
+          <option value="negative">Bearish — Red / Dark / Falling</option>
+          <option value="neutral">Flat — Blue / Grey / Steady</option>
+        </select>
+
+        <label style="margin-top:14px">Logo URL</label>
+        <input type="text" id="ov-logo" placeholder="https://logo.clearbit.com/hdfc.com" oninput="overrideLogo(this.value)">
+
+        <label style="margin-top:14px">Extra Prompt Instructions</label>
+        <textarea id="ov-prompt" rows="3" placeholder="e.g. cinematic blue tones, busy stock exchange floor, sunset..."></textarea>
+
+        <label style="margin-top:14px">Image Quality</label>
+        <select id="ov-quality">
+          <option value="standard">Standard (faster)</option>
+          <option value="hd">HD (sharper, slower)</option>
+        </select>
+
+        <div style="margin-top:12px">
+          <button class="btn-sm" onclick="regenWithOverrides()">↺ Regenerate with Overrides</button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-hd">Last Prompt</div>
+        <div class="info-box" id="last-prompt" style="font-size:10px;line-height:1.6;word-break:break-word">—</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-bg" id="key-modal">
+  <div class="modal">
+    <h3>OpenAI API Key</h3>
+    <p>Required for GPT-4o analysis and DALL·E 3 image generation. Your key is stored locally and never sent anywhere except OpenAI.</p>
+    <input type="text" id="key-input" placeholder="sk-..." style="font-family:monospace;font-size:12px">
+    <div class="modal-btns">
+      <button class="btn-prim" onclick="saveKey()">Save Key</button>
+      <button class="btn-sec" onclick="closeKeyModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const COLORS = {
+  none:   { bg:'transparent', text:'#111111' },
+  yellow: { bg:'#fde047',     text:'#1a1a1a' },
+  green:  { bg:'#22c55e',     text:'#ffffff' },
+  red:    { bg:'#ef4444',     text:'#ffffff' },
+  orange: { bg:'#f97316',     text:'#ffffff' },
+  cyan:   { bg:'#06b6d4',     text:'#ffffff' },
+  purple: { bg:'#a855f7',     text:'#ffffff' },
+};
+
+const SENTIMENT_VISUALS = {
+  positive: 'golden hour sunlight streaming through floor-to-ceiling windows, vibrant green upward-trending charts glowing on screens, energetic bullish atmosphere, warm gold and emerald color palette, dynamic optimistic energy',
+  negative: 'dramatic cold red emergency lighting, dark storm clouds visible through windows, sharp red declining charts on screens, tense urgent atmosphere, deep crimson and shadow palette',
+  neutral:  'cool professional blue-grey office lighting, flat stable market indicators, calm analytical atmosphere, silver and slate tones, steady composed energy',
+};
+
+const COMPOSITIONS = [
+  'extreme close-up, phone in sharp focus, shallow bokeh background, person partially visible',
+  'medium editorial shot, dramatic side lighting from left, three-quarter angle',
+  'wide dynamic angle, phone prominently in foreground, background in motion blur',
+  'low angle looking upward, person towering above with phone thrust toward camera',
+  'over-the-shoulder angle, phone screen filling half the frame',
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const st = {
+  apiKey: localStorage.getItem('ai_seo_key') || '',
+  company: '',
+  headline: '',
+  sentiment: 'auto',
+  ovSentiment: '',
+  analysis: null,
+  imageUrl: '',
+  logoUrl: '',
+  highlights: {},   // wordIndex → colorId
+  words: [],
+  selWord: null,
+  selColor: 'yellow',
+  generating: false,
+};
+
+// ─── API KEY ──────────────────────────────────────────────────────────────────
+function showKeyModal() {
+  document.getElementById('key-input').value = st.apiKey;
+  document.getElementById('key-modal').classList.add('show');
+}
+function closeKeyModal() {
+  document.getElementById('key-modal').classList.remove('show');
+}
+function saveKey() {
+  const k = document.getElementById('key-input').value.trim();
+  if (!k.startsWith('sk-')) { alert('Key should start with sk-'); return; }
+  st.apiKey = k;
+  localStorage.setItem('ai_seo_key', k);
+  closeKeyModal();
+  updateKeyBtn();
+}
+function updateKeyBtn() {
+  const b = document.getElementById('btn-key');
+  if (st.apiKey) { b.className='btn-key ok'; b.textContent='🔑 API Key ✓'; }
+  else           { b.className='btn-key';    b.textContent='🔑 Set API Key'; }
+}
+
+// ─── SENTIMENT UI ─────────────────────────────────────────────────────────────
+function setSentiment(s) {
+  st.sentiment = s;
+  ['auto','pos','neg','neu'].forEach(x => {
+    const b = document.getElementById('sb-'+x);
+    b.className = 'sent-btn';
+  });
+  const map = { auto:'sb-auto', positive:'sb-pos', negative:'sb-neg', neutral:'sb-neu' };
+  const cls = { auto:'s-auto', positive:'s-pos', negative:'s-neg', neutral:'s-neu' };
+  const key = s === 'auto' ? 'auto' : s;
+  document.getElementById(map[key]).className = 'sent-btn ' + cls[key];
+}
+
+// ─── PROGRESS ────────────────────────────────────────────────────────────────
+function setProgress(pct, msg) {
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-txt').textContent = msg;
+}
+
+// ─── API CALLS ────────────────────────────────────────────────────────────────
+async function analyzeContent(company, headline) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${st.apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: 'You are an expert on Indian financial companies and markets. Return ONLY valid JSON, no markdown.' },
+        { role: 'user', content: `Analyze:
+Company: ${company}
+Headline: ${headline}
+
+Return JSON:
+{
+  "companyDescription": "2-3 sentences what this company does, focusing on physical/visual world (buildings, products, people, scale)",
+  "industry": "single industry word e.g. Banking, Technology, Energy, Pharma, FMCG, Telecom, Auto",
+  "domain": "most likely website domain e.g. hdfc.com",
+  "sentiment": "positive or negative or neutral",
+  "backgroundScene": "vivid 2-sentence description of photorealistic scene for DALL-E: what's in the background, lighting, environment",
+  "highlightWords": ["2 to 3 most impactful words from the headline to highlight"]
+}` }
+      ]
+    })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Analysis failed'); }
+  const d = await res.json();
+  return JSON.parse(d.choices[0].message.content);
+}
+
+async function callDalle(prompt, quality) {
+  const res = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${st.apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'dall-e-3',
+      prompt,
+      n: 1,
+      size: '1792x1024',
+      quality: quality || 'standard',
+      style: 'vivid',
+    })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Image generation failed'); }
+  const d = await res.json();
+  return d.data[0].url;
+}
+
+async function tryFetchLogo(domain) {
+  const urls = [
+    `https://logo.clearbit.com/${domain}`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+  ];
+  for (const url of urls) {
+    const ok = await new Promise(r => {
+      const img = new Image();
+      img.onload = () => r(true);
+      img.onerror = () => r(false);
+      setTimeout(() => r(false), 3000);
+      img.src = url;
+    });
+    if (ok) return url;
+  }
+  return null;
+}
+
+function buildPrompt(analysis, company, extra) {
+  const comp = COMPOSITIONS[Math.floor(Math.random() * COMPOSITIONS.length)];
+  const sentiment = st.ovSentiment || analysis.sentiment;
+  const sentVis = SENTIMENT_VISUALS[sentiment] || SENTIMENT_VISUALS.neutral;
+  const ovDesc = document.getElementById('ov-desc').value.trim();
+  const scene = ovDesc || analysis.backgroundScene;
+
+  const p = `Ultra-photorealistic cinematic photograph, ${comp}, 8K quality, professional commercial photography.
+
+MAIN SUBJECT: A business professional holds a smartphone screen-first toward the camera. The phone screen is bright and clearly visible, showing the ${company} app or logo on the glowing display.
+
+BACKGROUND SCENE: ${scene}
+
+MARKET ATMOSPHERE: ${sentVis}
+
+STYLE: Photojournalism meets premium commercial advertising. Dramatic depth of field. Cinematic color grading. The very bottom 20% of frame should be naturally darker or shadowed.
+
+CRITICAL: No text, no words, no numbers anywhere in the image. Only the phone screen can show a logo/app interface.${extra ? '\n\nADDITIONAL INSTRUCTIONS: ' + extra : ''}`;
+
+  document.getElementById('last-prompt').textContent = p;
+  return p;
+}
+
+// ─── MAIN GENERATE ────────────────────────────────────────────────────────────
+async function generate() {
+  if (!st.apiKey) { showKeyModal(); return; }
+  if (!st.company.trim() || !st.headline.trim()) {
+    alert('Please enter both company name and headline.'); return;
+  }
+
+  st.generating = true;
+  const t0 = Date.now();
+  document.getElementById('btn-gen').disabled = true;
+  document.getElementById('btn-gen').innerHTML = '<span class="spinner"></span>Generating...';
+
+  try {
+    // Step 1: Analyze
+    setProgress(10, 'Analyzing company & market sentiment…');
+    const analysis = await analyzeContent(st.company.trim(), st.headline.trim());
+    st.analysis = analysis;
+
+    // Apply detected sentiment to UI if auto
+    if (st.sentiment === 'auto') setSentiment(analysis.sentiment);
+
+    // Show company info
+    document.getElementById('info-desc').textContent = analysis.companyDescription;
+    document.getElementById('info-desc').classList.add('filled');
+    document.getElementById('domain-txt').textContent = analysis.domain;
+    document.getElementById('ov-desc').value = analysis.backgroundScene;
+
+    // Step 2: Logo (parallel-ish, no await blocking image gen)
+    setProgress(25, `Fetching logo for ${analysis.domain}…`);
+    const logoPromise = tryFetchLogo(analysis.domain);
+
+    // Step 3: Generate image
+    setProgress(35, 'Sending prompt to DALL·E 3…');
+    const extra = document.getElementById('ov-prompt').value.trim();
+    const quality = document.getElementById('ov-quality').value;
+    const prompt = buildPrompt(analysis, st.company.trim(), extra);
+
+    const imageUrl = await callDalle(prompt, quality);
+    st.imageUrl = imageUrl;
+
+    // Step 4: Resolve logo
+    setProgress(88, 'Loading image…');
+    const logoUrl = await logoPromise;
+    st.logoUrl = logoUrl;
+    if (logoUrl) {
+      document.getElementById('logo-img').src = logoUrl;
+      document.getElementById('logo-img').style.display = 'block';
+      document.getElementById('ov-logo').value = logoUrl;
+    }
+
+    // Step 5: Setup words
+    st.words = st.headline.trim().split(/\s+/);
+    st.highlights = {};
+    if (analysis.highlightWords) {
+      const autoColor = analysis.sentiment === 'positive' ? 'green'
+                      : analysis.sentiment === 'negative' ? 'red' : 'yellow';
+      analysis.highlightWords.forEach(hw => {
+        const idx = st.words.findIndex(w =>
+          w.toLowerCase().replace(/[^a-z0-9]/g,'') === hw.toLowerCase().replace(/[^a-z0-9]/g,'')
+        );
+        if (idx >= 0) st.highlights[idx] = autoColor;
+      });
+    }
+
+    // Show preview
+    showPreview(imageUrl);
+
+    setProgress(100, `Done!`);
+    const secs = ((Date.now() - t0) / 1000).toFixed(1);
+    document.getElementById('timing-val').textContent = secs + 's';
+
+  } catch(err) {
+    setProgress(0, '');
+    alert('Error: ' + err.message);
+    console.error(err);
+  } finally {
+    st.generating = false;
+    document.getElementById('btn-gen').disabled = false;
+    document.getElementById('btn-gen').textContent = '⚡ Generate Image';
+  }
+}
+
+async function regenWithOverrides() {
+  if (!st.analysis || !st.apiKey) return;
+  st.generating = true;
+  document.getElementById('btn-gen').disabled = true;
+  setProgress(10, 'Regenerating with overrides…');
+  const t0 = Date.now();
+  try {
+    const extra = document.getElementById('ov-prompt').value.trim();
+    const quality = document.getElementById('ov-quality').value;
+    const prompt = buildPrompt(st.analysis, st.company.trim(), extra);
+    setProgress(35, 'Sending to DALL·E 3…');
+    const imageUrl = await callDalle(prompt, quality);
+    st.imageUrl = imageUrl;
+    showPreview(imageUrl);
+    setProgress(100, 'Done!');
+    const secs = ((Date.now() - t0) / 1000).toFixed(1);
+    document.getElementById('timing-val').textContent = secs + 's';
+  } catch(err) {
+    setProgress(0, '');
+    alert('Error: ' + err.message);
+  } finally {
+    st.generating = false;
+    document.getElementById('btn-gen').disabled = false;
+    document.getElementById('btn-gen').textContent = '⚡ Generate Image';
+  }
+}
+
+function overrideLogo(url) {
+  if (!url) return;
+  st.logoUrl = url;
+  document.getElementById('logo-img').src = url;
+  document.getElementById('logo-img').style.display = 'block';
+}
+
+// ─── PREVIEW ──────────────────────────────────────────────────────────────────
+function showPreview(imageUrl) {
+  document.getElementById('empty-state').style.display = 'none';
+  const wrap = document.getElementById('preview-wrap');
+  wrap.style.display = 'block';
+
+  const img = document.getElementById('preview-img');
+  img.onload = () => {
+    // Size preview to fit area
+    const area = document.getElementById('canvas-area');
+    const aw = area.clientWidth - 40;
+    const ah = area.clientHeight - 40;
+    const ratio = 1200 / 628;
+    let w = aw, h = aw / ratio;
+    if (h > ah) { h = ah; w = h * ratio; }
+    img.style.width = w + 'px';
+    img.style.height = h + 'px';
+
+    // Font size based on preview width
+    const fs = Math.max(10, Math.min(30, w / st.words.join(' ').length * 1.4));
+    renderWordsOverlay(fs);
+    document.getElementById('text-overlay').style.display = 'flex';
+    document.getElementById('btn-dl').disabled = false;
+  };
+  img.src = imageUrl;
+
+  renderPills();
+}
+
+// ─── WORD OVERLAY ─────────────────────────────────────────────────────────────
+function renderWordsOverlay(fs) {
+  const container = document.getElementById('words-line');
+  container.innerHTML = '';
+  const fontSize = fs || 18;
+
+  st.words.forEach((word, i) => {
+    const span = document.createElement('span');
+    span.className = 'w-span';
+    span.textContent = word;
+    span.style.fontSize = fontSize + 'px';
+    const c = st.highlights[i];
+    if (c && c !== 'none') span.classList.add('hl-' + c);
+
+    span.onclick = () => {
+      st.selWord = i;
+      highlightPills();
+      // Cycle on click
+      const order = ['none','yellow','green','red','orange','cyan','purple'];
+      const cur = st.highlights[i] || 'none';
+      st.highlights[i] = order[(order.indexOf(cur) + 1) % order.length];
+      refreshOverlay();
+    };
+    container.appendChild(span);
+    if (i < st.words.length - 1) container.appendChild(document.createTextNode(' '));
+  });
+}
+
+function refreshOverlay() {
+  const spans = document.querySelectorAll('#words-line .w-span');
+  spans.forEach((span, i) => {
+    span.className = 'w-span';
+    const c = st.highlights[i];
+    if (c && c !== 'none') span.classList.add('hl-' + c);
+  });
+  renderPills();
+}
+
+// ─── PILLS ───────────────────────────────────────────────────────────────────
+function renderPills() {
+  const wrap = document.getElementById('pills-wrap');
+  wrap.innerHTML = '';
+  st.words.forEach((word, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'pill' + (st.selWord === i ? ' sel' : '');
+    pill.textContent = word;
+    const c = st.highlights[i];
+    if (c && c !== 'none' && COLORS[c]) {
+      pill.style.background = COLORS[c].bg;
+      pill.style.color = COLORS[c].text;
+      pill.style.borderColor = 'transparent';
+    }
+    pill.onclick = () => { st.selWord = i; highlightPills(); };
+    wrap.appendChild(pill);
+  });
+}
+
+function highlightPills() {
+  document.querySelectorAll('#pills-wrap .pill').forEach((p, i) => {
+    p.classList.toggle('sel', i === st.selWord);
+  });
+}
+
+function applyColor(colorId) {
+  // Update color dot selection
+  document.querySelectorAll('.clr-dot').forEach(d => d.classList.toggle('active', d.dataset.c === colorId));
+  st.selColor = colorId;
+  if (st.selWord !== null) {
+    st.highlights[st.selWord] = colorId;
+    refreshOverlay();
+  }
+}
+
+// ─── CANVAS DOWNLOAD ─────────────────────────────────────────────────────────
+async function downloadImage() {
+  if (!st.imageUrl) return;
+  const btn = document.getElementById('btn-dl');
+  btn.disabled = true;
+  btn.textContent = 'Preparing…';
+
+  try {
+    const W = 1200, H = 628;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Load image
+    const img = await loadImg(st.imageUrl);
+
+    // Crop 1792×1024 → 1200×628 (center crop)
+    const srcW = 1792, srcH = 1024;
+    const dstR = W / H;
+    const srcR = srcW / srcH;
+    let sx = 0, sy = 0, sw = srcW, sh = srcH;
+    if (srcR > dstR) { sw = srcH * dstR; sx = (srcW - sw) / 2; }
+    else             { sh = srcW / dstR; sy = (srcH - sh) / 2; }
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+
+    // Gradient overlay (bottom 28%)
+    const gy = H * 0.70;
+    const grad = ctx.createLinearGradient(0, gy, 0, H);
+    grad.addColorStop(0,   'rgba(255,255,255,0)');
+    grad.addColorStop(0.3, 'rgba(255,255,255,0.88)');
+    grad.addColorStop(1,   'rgba(255,255,255,1)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, gy, W, H - gy);
+
+    // Logo badge (top-right corner)
+    if (st.logoUrl) {
+      try {
+        const logo = await loadImg(st.logoUrl);
+        const ls = 52, lx = W - ls - 18, ly = 16;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.18)';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.roundRect(lx - 7, ly - 7, ls + 14, ls + 14, 10);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.restore();
+        ctx.drawImage(logo, lx, ly, ls, ls);
+      } catch(e) { /* skip if CORS blocked */ }
+    }
+
+    // Text
+    const textY = H * 0.755;
+    const pad = 28;
+    const maxW = W - pad * 2;
+    const chars = st.words.join(' ').length;
+    const fs = chars < 25 ? 54 : chars < 40 ? 46 : chars < 60 ? 38 : 30;
+    const lh = fs * 1.22;
+
+    ctx.font = `900 ${fs}px Montserrat, Arial Black, sans-serif`;
+    ctx.textBaseline = 'alphabetic';
+
+    // Calculate word positions with wrapping
+    const positions = [];
+    let cx = pad, cy = textY + fs;
+    st.words.forEach((word, i) => {
+      const ww = ctx.measureText(word + ' ').width;
+      if (i > 0 && cx + ww > pad + maxW) { cx = pad; cy += lh; }
+      positions.push({ word, x: cx, y: cy, w: ww });
+      cx += ww;
+    });
+
+    // Draw highlight rects
+    positions.forEach((p, i) => {
+      const c = st.highlights[i];
+      if (c && c !== 'none' && COLORS[c]) {
+        ctx.fillStyle = COLORS[c].bg;
+        ctx.beginPath();
+        ctx.roundRect(p.x - 4, p.y - fs + 2, p.w + 2, fs + 6, 4);
+        ctx.fill();
+      }
+    });
+
+    // Draw text
+    positions.forEach((p, i) => {
+      const c = st.highlights[i];
+      ctx.fillStyle = (c && c !== 'none' && COLORS[c]) ? COLORS[c].text : '#111111';
+      ctx.fillText(p.word, p.x, p.y);
+    });
+
+    // Download
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${st.company.replace(/\s+/g,'_')}_seo_${Date.now()}.png`;
+      a.click();
+    }, 'image/png');
+
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↓ Download PNG';
+  }
+}
+
+function loadImg(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+updateKeyBtn();
+setSentiment('auto');
+if (!st.apiKey) setTimeout(showKeyModal, 600);
+</script>
+</body>
+</html>

@@ -98,6 +98,15 @@ select option{background:var(--card)}
 .empty-txt{font-size:13px;color:var(--muted)}
 .empty-sub{font-size:11px;opacity:.6}
 
+/* PHONE LOGO OVERLAY */
+.phone-overlay{position:absolute;z-index:10;cursor:move;user-select:none}
+.phone-shell{background:#111;border-radius:18%;padding:6%;box-shadow:0 8px 32px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.phone-notch{width:40%;height:8%;background:#111;border-radius:0 0 40% 40%;margin-bottom:4%}
+.phone-screen{background:white;border-radius:10%;width:100%;flex:1;display:flex;align-items:center;justify-content:center;padding:15%}
+.phone-screen img{width:100%;height:100%;object-fit:contain}
+.phone-home{width:30%;height:4%;background:#333;border-radius:10px;margin-top:4%;border:1px solid #444}
+.phone-drag-hint{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(255,255,255,.5);white-space:nowrap;pointer-events:none}
+
 /* BOTTOM BAR */
 .bot{border-top:1px solid var(--border);background:var(--panel);padding:9px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bot-label{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0}
@@ -136,6 +145,7 @@ select option{background:var(--card)}
 .btn-prim{flex:1;padding:10px;background:var(--accent);border:none;border-radius:8px;color:white;font-weight:700;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
 .btn-sec{padding:10px 14px;background:var(--card);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
 
+input[type=range]{width:100%;accent-color:var(--accent);height:3px;background:none;border:none;padding:0;cursor:pointer}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 </style>
@@ -205,6 +215,15 @@ select option{background:var(--card)}
       </div>
       <div class="preview-wrap" id="preview-wrap" style="display:none">
         <img id="preview-img" src="" alt="preview">
+        <!-- Phone logo overlay — draggable -->
+        <div class="phone-overlay" id="phone-overlay" style="display:none;left:42%;top:6%;width:11%">
+          <div class="phone-drag-hint">drag to reposition</div>
+          <div class="phone-shell" style="aspect-ratio:9/18">
+            <div class="phone-notch"></div>
+            <div class="phone-screen"><img id="phone-logo-overlay" src="" alt="logo"></div>
+            <div class="phone-home"></div>
+          </div>
+        </div>
         <div class="text-overlay" id="text-overlay">
           <div class="words-line" id="words-line"></div>
         </div>
@@ -267,6 +286,16 @@ select option{background:var(--card)}
       </div>
 
       <div class="sec">
+        <div class="sec-hd">Phone Logo Position</div>
+        <label>Horizontal % (left)</label>
+        <input type="range" id="logo-x" min="5" max="75" value="42" oninput="updatePhonePos()">
+        <label>Vertical % (top)</label>
+        <input type="range" id="logo-y" min="2" max="60" value="6" oninput="updatePhonePos()">
+        <label>Size %</label>
+        <input type="range" id="logo-size" min="5" max="25" value="11" oninput="updatePhonePos()">
+      </div>
+
+      <div class="sec">
         <div class="sec-hd">Last Prompt</div>
         <div class="info-box" id="last-prompt" style="font-size:10px;line-height:1.6;word-break:break-word">—</div>
       </div>
@@ -301,17 +330,41 @@ const COLORS = {
 };
 
 const SENTIMENT_VISUALS = {
-  positive: 'golden hour sunlight streaming through floor-to-ceiling windows, vibrant green upward-trending charts glowing on screens, energetic bullish atmosphere, warm gold and emerald color palette, dynamic optimistic energy',
-  negative: 'dramatic cold red emergency lighting, dark storm clouds visible through windows, sharp red declining charts on screens, tense urgent atmosphere, deep crimson and shadow palette',
-  neutral:  'cool professional blue-grey office lighting, flat stable market indicators, calm analytical atmosphere, silver and slate tones, steady composed energy',
+  positive: [
+    'triumphant golden sunrise light exploding through glass, brilliant green upward rockets on holographic trading screens, bulls charging in the background, euphoric energy of a market all-time high, warm amber and emerald palette',
+    'champagne-and-gold atmosphere, massive green candles on screens, confetti-like data streams, traders cheering, sunlight cutting through glass like a victory lap, the unmistakable feeling of a breakout',
+    'lush cinematic green gradients, glowing upward arrows everywhere, a city of winners — skyscrapers lit in green at dusk, energy so optimistic it radiates off the screen',
+  ],
+  negative: [
+    'blood-red emergency lighting, sirens implied by deep crimson casting hard shadows, bears growling in abstract murals, traders frozen in disbelief before cascading red numbers, the eerie silence of a crash',
+    'apocalyptic storm clouds pressing against the windows, red lightning in the charts, a lone analyst watching the carnage unfold on multiple screens, noir financial thriller atmosphere, heavy and suffocating',
+    'dark dramatic chiaroscuro lighting, deep shadows and piercing red shafts of light, falling numbers like digital rain, the unmistakable dread of a market meltdown, cinematic and haunting',
+  ],
+  neutral: [
+    'cool silver-blue morning light, flat horizontal lines on trading screens, disciplined analysts at work, no panic no euphoria — pure precision, the calm of a seasoned market professional',
+    'muted blue-grey palette, markets in equilibrium, data flowing steadily across screens like a heartbeat, composed and analytical, the stoic energy of a flat open',
+    'professional overcast lighting, balanced indicators, traders quietly watching, the neutral tension of a market waiting to break direction — calculated, watchful, still',
+  ],
+};
+
+const INDUSTRY_SCENES = {
+  Banking:      ['grand marble banking hall, soaring columns, gold leaf accents, real-time market data on giant curved screens, dramatic overhead lighting from chandeliers','glass-facade bank tower at dusk reflecting city skyline, premium architectural photography, power and scale','trading floor humming with activity, rows of glowing terminals, analysts in motion, electric blue monitor light'],
+  Technology:   ['sleek silicon valley-style campus at magic hour, glass and steel geodesic structures, innovation oozing from every angle','server farm corridor bathed in electric blue and purple light, rows of blinking racks, cool futuristic atmosphere','open-plan tech war room at night, developers at 4K monitors, the city sprawling below through floor-to-ceiling glass'],
+  Energy:       ['colossal oil refinery at sunset, industrial towers with dramatic flame stacks against an orange-purple sky, raw industrial power','offshore drilling platform in churning seas, spray and steel, dramatic storm light from the horizon','wind turbine farm at golden hour, turbines spinning against a vivid sky, the scale of renewable energy made visceral'],
+  Pharma:       ['cutting-edge pharmaceutical research lab, scientists in white coats under clean bright light, microscopes and data screens','sterile manufacturing facility with glass bioreactors glowing amber, high-tech and high-stakes','research campus at dusk, glass towers housing the future of medicine, soft evening glow and precision'],
+  FMCG:         ['busy consumer goods factory, products rolling off gleaming assembly lines, brand colors everywhere, energetic and vibrant','modern brand headquarters, colorful and bold, product displays everywhere, a hive of creative energy','supermarket shelf aisle shot from low angle, products stacked high, bold packaging, retail scale and ambition'],
+  Telecom:      ['telecom tower at blue hour, city grid stretching to the horizon, invisible waves of connectivity visualized as light streams','5G network operations center, globe-spanning data maps on giant screens, operators monitoring the pulse of connectivity','aerial view of a city at night, light grid suggesting invisible network infrastructure, scale and reach'],
+  Auto:         ['gleaming car factory floor, robotic arms assembling vehicles in choreographed precision, sparks flying, dramatic industrial light','luxury automobile showroom at night, spotlit cars on polished marble, aspirational and sleek','highway at golden hour, convoy of vehicles, speed and freedom, cinematic wide angle'],
+  default:      ['dramatic corporate skyline at sunset, glass towers catching the last light, power and ambition','modern trading floor, multiple screens, focused professionals, data everywhere, cinematic depth of field','glass boardroom with city views at dusk, high-stakes atmosphere, premium and intense'],
 };
 
 const COMPOSITIONS = [
-  'extreme close-up, phone in sharp focus, shallow bokeh background, person partially visible',
-  'medium editorial shot, dramatic side lighting from left, three-quarter angle',
-  'wide dynamic angle, phone prominently in foreground, background in motion blur',
-  'low angle looking upward, person towering above with phone thrust toward camera',
-  'over-the-shoulder angle, phone screen filling half the frame',
+  'Dutch angle close-up, phone thrust toward camera, face partially in shadow behind it, electric and urgent',
+  'cinematic medium shot, subject silhouetted against wall of glowing screens, phone held at chest level, light from screen illuminating face',
+  'extreme macro of phone screen edge-on, fingertips barely visible, blurred city-light bokeh behind, intimate and intense',
+  'low-angle power shot, subject towering above camera, phone raised overhead, background chaos of markets below',
+  'split-lighting noir shot, half face in deep shadow, phone screen as sole light source, financial thriller aesthetic',
+  'wide cinematic composition, subject small against vast screen wall, phone raised, David vs Goliath energy',
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -442,21 +495,30 @@ async function tryFetchLogo(domain) {
 function buildPrompt(analysis, company, extra) {
   const comp = COMPOSITIONS[Math.floor(Math.random() * COMPOSITIONS.length)];
   const sentiment = st.ovSentiment || analysis.sentiment;
-  const sentVis = SENTIMENT_VISUALS[sentiment] || SENTIMENT_VISUALS.neutral;
+
+  // Pick random sentiment visual variation
+  const sentArr = SENTIMENT_VISUALS[sentiment] || SENTIMENT_VISUALS.neutral;
+  const sentVis = sentArr[Math.floor(Math.random() * sentArr.length)];
+
+  // Pick industry scene
+  const industry = analysis.industry || 'default';
+  const sceneArr = INDUSTRY_SCENES[industry] || INDUSTRY_SCENES.default;
+  const autoScene = sceneArr[Math.floor(Math.random() * sceneArr.length)];
+
   const ovDesc = document.getElementById('ov-desc').value.trim();
-  const scene = ovDesc || analysis.backgroundScene;
+  const scene = ovDesc || autoScene;
 
-  const p = `Ultra-photorealistic cinematic photograph, ${comp}, 8K quality, professional commercial photography.
+  const p = `Hyper-realistic cinematic photograph, shot on Phase One IQ4 150MP, ${comp}, 8K resolution, magazine cover quality.
 
-MAIN SUBJECT: A business professional holds a smartphone screen-first toward the camera. The phone screen is bright and clearly visible, showing the ${company} app or logo on the glowing display.
+MAIN SUBJECT: A well-dressed Indian business professional holds a modern smartphone screen-first toward the camera. The phone screen must be a COMPLETELY BLANK GLOWING WHITE SCREEN — clean, bright, no content, no logos, no UI. The phone is the hero of the shot.
 
-BACKGROUND SCENE: ${scene}
+BACKGROUND WORLD: ${scene}. This is the world of ${company} — ${analysis.companyDescription}
 
-MARKET ATMOSPHERE: ${sentVis}
+MARKET MOOD: ${sentVis}
 
-STYLE: Photojournalism meets premium commercial advertising. Dramatic depth of field. Cinematic color grading. The very bottom 20% of frame should be naturally darker or shadowed.
+LIGHTING & STYLE: Academy-ratio cinematic grading. Rich, textured shadows. The kind of image that wins Cannes Lions. Dramatic, emotional, visceral. The bottom 22% of the frame fades naturally into darkness or shadow — leave room for text.
 
-CRITICAL: No text, no words, no numbers anywhere in the image. Only the phone screen can show a logo/app interface.${extra ? '\n\nADDITIONAL INSTRUCTIONS: ' + extra : ''}`;
+ABSOLUTE RULES: Zero text. Zero numbers. Zero logos. Zero UI elements anywhere. The phone screen must be blank white/glowing. One human subject maximum. Make it cinematic enough to stop someone mid-scroll.${extra ? '\n\nEXTRA DIRECTION: ' + extra : ''}`;
 
   document.getElementById('last-prompt').textContent = p;
   return p;
@@ -515,9 +577,10 @@ async function generate() {
     // Step 5: Setup words
     st.words = st.headline.trim().split(/\s+/);
     st.highlights = {};
+    const effectiveSentiment = st.sentiment !== 'auto' ? st.sentiment : analysis.sentiment;
     if (analysis.highlightWords) {
-      const autoColor = analysis.sentiment === 'positive' ? 'green'
-                      : analysis.sentiment === 'negative' ? 'red' : 'yellow';
+      const autoColor = effectiveSentiment === 'positive' ? 'green'
+                      : effectiveSentiment === 'negative' ? 'red' : 'yellow';
       analysis.highlightWords.forEach(hw => {
         const idx = st.words.findIndex(w =>
           w.toLowerCase().replace(/[^a-z0-9]/g,'') === hw.toLowerCase().replace(/[^a-z0-9]/g,'')
@@ -586,7 +649,6 @@ function showPreview(imageUrl) {
 
   const img = document.getElementById('preview-img');
   img.onload = () => {
-    // Size preview to fit area
     const area = document.getElementById('canvas-area');
     const aw = area.clientWidth - 40;
     const ah = area.clientHeight - 40;
@@ -596,15 +658,50 @@ function showPreview(imageUrl) {
     img.style.width = w + 'px';
     img.style.height = h + 'px';
 
-    // Font size based on preview width
     const fs = Math.max(10, Math.min(30, w / st.words.join(' ').length * 1.4));
     renderWordsOverlay(fs);
     document.getElementById('text-overlay').style.display = 'flex';
     document.getElementById('btn-dl').disabled = false;
+
+    // Show phone logo overlay
+    if (st.logoUrl) {
+      const overlay = document.getElementById('phone-overlay');
+      document.getElementById('phone-logo-overlay').src = st.logoUrl;
+      overlay.style.display = 'block';
+      makeDraggable(overlay);
+    }
   };
   img.src = imageUrl;
 
   renderPills();
+}
+
+function updatePhonePos() {
+  const overlay = document.getElementById('phone-overlay');
+  overlay.style.left  = document.getElementById('logo-x').value + '%';
+  overlay.style.top   = document.getElementById('logo-y').value + '%';
+  overlay.style.width = document.getElementById('logo-size').value + '%';
+}
+
+function makeDraggable(el) {
+  let ox, oy, startL, startT;
+  el.onmousedown = e => {
+    if (e.target.tagName === 'IMG' || e.target.tagName === 'INPUT') return;
+    e.preventDefault();
+    const wrap = document.getElementById('preview-wrap');
+    const wr = wrap.getBoundingClientRect();
+    ox = e.clientX; oy = e.clientY;
+    startL = parseFloat(el.style.left); startT = parseFloat(el.style.top);
+    const onMove = m => {
+      const dx = (m.clientX - ox) / wr.width  * 100;
+      const dy = (m.clientY - oy) / wr.height * 100;
+      el.style.left = Math.max(0, Math.min(80, startL + dx)) + '%';
+      el.style.top  = Math.max(0, Math.min(65, startT + dy)) + '%';
+    };
+    const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
 }
 
 // ─── WORD OVERLAY ─────────────────────────────────────────────────────────────
@@ -624,11 +721,8 @@ function renderWordsOverlay(fs) {
     span.onclick = () => {
       st.selWord = i;
       highlightPills();
-      // Cycle on click
-      const order = ['none','yellow','green','red','orange','cyan','purple'];
-      const cur = st.highlights[i] || 'none';
-      st.highlights[i] = order[(order.indexOf(cur) + 1) % order.length];
-      refreshOverlay();
+      // Just select — color is applied via color dots below
+      renderWordsOverlaySelection();
     };
     container.appendChild(span);
     if (i < st.words.length - 1) container.appendChild(document.createTextNode(' '));
@@ -641,8 +735,18 @@ function refreshOverlay() {
     span.className = 'w-span';
     const c = st.highlights[i];
     if (c && c !== 'none') span.classList.add('hl-' + c);
+    if (i === st.selWord) span.style.outline = '2px solid var(--accent)';
+    else span.style.outline = 'none';
   });
   renderPills();
+}
+
+function renderWordsOverlaySelection() {
+  // Only update selection indicators without rebuilding spans
+  const spans = document.querySelectorAll('#words-line .w-span');
+  spans.forEach((span, i) => {
+    span.style.outline = i === st.selWord ? '2px solid var(--accent)' : 'none';
+  });
 }
 
 // ─── PILLS ───────────────────────────────────────────────────────────────────
@@ -714,21 +818,58 @@ async function downloadImage() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, gy, W, H - gy);
 
-    // Logo badge (top-right corner)
+    // Phone + logo overlay (composited at same position as preview overlay)
     if (st.logoUrl) {
       try {
         const logo = await loadImg(st.logoUrl);
-        const ls = 52, lx = W - ls - 18, ly = 16;
+        const overlay = document.getElementById('phone-overlay');
+        const img2 = document.getElementById('preview-img');
+        const iRect = img2.getBoundingClientRect();
+        const oRect = overlay.getBoundingClientRect();
+
+        // Map preview overlay position to canvas coordinates
+        const scaleX = W / iRect.width;
+        const scaleY = H / iRect.height;
+        const ox = (oRect.left - iRect.left) * scaleX;
+        const oy = (oRect.top  - iRect.top)  * scaleY;
+        const ow = oRect.width  * scaleX;
+        const oh = oRect.height * scaleY;
+
+        // Phone bezel
+        const bezelR = ow * 0.18;
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.18)';
-        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#111111';
         ctx.beginPath();
-        ctx.roundRect(lx - 7, ly - 7, ls + 14, ls + 14, 10);
-        ctx.fillStyle = 'white';
+        ctx.roundRect(ox, oy, ow, oh, bezelR);
         ctx.fill();
         ctx.restore();
-        ctx.drawImage(logo, lx, ly, ls, ls);
-      } catch(e) { /* skip if CORS blocked */ }
+
+        // Notch
+        ctx.fillStyle = '#111111';
+        ctx.beginPath();
+        ctx.roundRect(ox + ow*0.3, oy + oh*0.02, ow*0.4, oh*0.05, 10);
+        ctx.fill();
+
+        // Screen area (white)
+        const sx = ox + ow*0.1, sy = oy + oh*0.1, sw2 = ow*0.8, sh2 = oh*0.78;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(sx, sy, sw2, sh2, ow * 0.08);
+        ctx.clip();
+        ctx.fillStyle = 'white';
+        ctx.fillRect(sx, sy, sw2, sh2);
+        const pad = sw2 * 0.15;
+        ctx.drawImage(logo, sx + pad, sy + pad, sw2 - pad*2, sh2 - pad*2);
+        ctx.restore();
+
+        // Home bar
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.roundRect(ox + ow*0.35, oy + oh*0.91, ow*0.3, oh*0.03, 5);
+        ctx.fill();
+      } catch(e) { /* skip if CORS */ }
     }
 
     // Text
